@@ -5,6 +5,8 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import Select from "react-select";
+import CompassIcon from "../components/CompassIcon";
+import { calculateCompassDirection } from "../utils/compassDirection";
 
 export const Route = createFileRoute("/random")({
   component: RouteComponent,
@@ -45,19 +47,21 @@ export const Route = createFileRoute("/random")({
 type Province = {
   id: number;
   name: string;
-  latitude: string;
-  longitude: string;
+  latitude: number;
+  longitude: number;
 };
 
 function RouteComponent() {
   const navigate = useNavigate();
 
   const [selectedProvinces, setSelectedProvinces] = useState<Province[]>([]);
-
+  const [direction, setDirection] = useState(50);
   const { food, provinces } = useLoaderData({ from: "/random" }) as {
     food: any;
     provinces: Province[];
   };
+
+  console.log(food);
 
   const onChange = (option: Province | null) => {
     setSelectedProvinces((prevProvinces) => {
@@ -172,7 +176,17 @@ function RouteComponent() {
                 key={province.id}
                 className="p-3 bg-gray-100 rounded-md shadow-sm"
               >
-                {province.name}
+                <div className="flex justify-between">
+                  <div>{province.name}</div>
+                  <CompassIcon
+                    direction={calculateCompassDirection(
+                      province.latitude,
+                      province.longitude,
+                      food.province.latitude,
+                      food.province.longitude
+                    )}
+                  />
+                </div>
               </li>
             ))}
           </ul>
