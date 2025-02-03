@@ -55,15 +55,21 @@ function RouteComponent() {
   const navigate = useNavigate();
 
   const [selectedProvinces, setSelectedProvinces] = useState<Province[]>([]);
-  const [direction, setDirection] = useState(50);
+
   const { food, provinces } = useLoaderData({ from: "/random" }) as {
     food: any;
     provinces: Province[];
   };
 
-  console.log(food);
-
   const onChange = (option: Province | null) => {
+    if (option?.id == food.province_id) {
+      const data = window.localStorage.getItem("gameState");
+      const gameState = data ? JSON.parse(data) : {};
+      gameState.hasWon = true;
+      gameState.roundOver = true;
+      window.localStorage.setItem("gameState", JSON.stringify(gameState));
+    }
+
     setSelectedProvinces((prevProvinces) => {
       if (option) {
         return [...prevProvinces, option];
@@ -81,12 +87,27 @@ function RouteComponent() {
   };
 
   useEffect(() => {
-    const data = window.localStorage.getItem("myTest");
-    if (data) setSelectedProvinces(JSON.parse(data));
+    const data = window.localStorage.getItem("gameState");
+    const parsedData = data ? JSON.parse(data) : {};
+
+    if (parsedData.selectedProvinces?.length) {
+      setSelectedProvinces(parsedData.selectedProvinces);
+    }
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem("myTest", JSON.stringify(selectedProvinces));
+    const data = window.localStorage.getItem("gameState");
+    let gameState = data ? JSON.parse(data) : {};
+
+    gameState.selectedProvinces = selectedProvinces;
+    gameState.roundOver =
+      gameState.roundOver || selectedProvinces.length === 5 ? true : false;
+
+    window.localStorage.setItem("gameState", JSON.stringify(gameState));
+    console.log(gameState);
+    if (gameState.roundOver) {
+      navigate({ to: "/result" });
+    }
   }, [selectedProvinces]);
 
   return (
@@ -148,7 +169,11 @@ function RouteComponent() {
             <div>
               <div className="text-sm font-bold opacity-80">Name</div>
               <hr className="h-px my-1 bg-gray-200 border-0 dark:bg-gray-700"></hr>
-              <div className="text-lg">{food.name}</div>
+              {selectedProvinces.length > 1 ? (
+                <div className="text-6xl font-bold">{food.name}</div>
+              ) : (
+                <div className="italic opacity-60">Reveals after 2 guesses</div>
+              )}
             </div>
             <div>
               <div className="text-sm font-bold opacity-80">Ingredients</div>
@@ -167,7 +192,7 @@ function RouteComponent() {
         <div className="max-w-3xl w-3xl p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 mr-5 flex flex-col">
           <div className="flex flex-row justify-between">
             <span>Guesses Remaining:</span>
-            <span>0</span>
+            <span>{5 - selectedProvinces.length}</span>
           </div>
           <hr className="h-px my-1 bg-gray-200 border-0 dark:bg-gray-700"></hr>
           <ul className="space-y-2 mt-2 mb-3">
@@ -200,6 +225,7 @@ function RouteComponent() {
             components={{
               SingleValue: customSingleValue,
             }}
+            isDisabled={selectedProvinces.length == 5}
             value={null}
             isClearable={false}
           />

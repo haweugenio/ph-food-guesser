@@ -11,10 +11,17 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as ResultImport } from './routes/result'
 import { Route as RandomImport } from './routes/random'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
+
+const ResultRoute = ResultImport.update({
+  id: '/result',
+  path: '/result',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const RandomRoute = RandomImport.update({
   id: '/random',
@@ -46,6 +53,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RandomImport
       parentRoute: typeof rootRoute
     }
+    '/result': {
+      id: '/result'
+      path: '/result'
+      fullPath: '/result'
+      preLoaderRoute: typeof ResultImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -54,36 +68,41 @@ declare module '@tanstack/react-router' {
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/random': typeof RandomRoute
+  '/result': typeof ResultRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/random': typeof RandomRoute
+  '/result': typeof ResultRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/random': typeof RandomRoute
+  '/result': typeof ResultRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/random'
+  fullPaths: '/' | '/random' | '/result'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/random'
-  id: '__root__' | '/' | '/random'
+  to: '/' | '/random' | '/result'
+  id: '__root__' | '/' | '/random' | '/result'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RandomRoute: typeof RandomRoute
+  ResultRoute: typeof ResultRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RandomRoute: RandomRoute,
+  ResultRoute: ResultRoute,
 }
 
 export const routeTree = rootRoute
@@ -97,7 +116,8 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/random"
+        "/random",
+        "/result"
       ]
     },
     "/": {
@@ -105,6 +125,9 @@ export const routeTree = rootRoute
     },
     "/random": {
       "filePath": "random.tsx"
+    },
+    "/result": {
+      "filePath": "result.tsx"
     }
   }
 }
