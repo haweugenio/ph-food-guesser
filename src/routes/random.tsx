@@ -1,17 +1,38 @@
-import { createFileRoute, useLoaderData } from "@tanstack/react-router";
-import { useState } from "react";
+import {
+  createFileRoute,
+  useLoaderData,
+  useNavigate,
+} from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import Select from "react-select";
 
 export const Route = createFileRoute("/random")({
   component: RouteComponent,
   loader: async () => {
     try {
-      const [food, provinces] = await Promise.all([
-        fetch("http://127.0.0.1:8000/api/foods/random").then((res) =>
-          res.json()
-        ),
-        fetch("http://127.0.0.1:8000/api/provinces").then((res) => res.json()),
-      ]);
+      let food = window.localStorage.getItem("food");
+      if (food == null) {
+        // Fetch food data
+        const foodResponse = await fetch(
+          "http://127.0.0.1:8000/api/foods/random"
+        );
+        if (!foodResponse.ok) {
+          throw new Error("Failed to fetch food data");
+        }
+        food = await foodResponse.json();
+        window.localStorage.setItem("food", JSON.stringify(food));
+      } else {
+        food = JSON.parse(food);
+      }
+
+      // Fetch provinces data
+      const provincesResponse = await fetch(
+        "http://127.0.0.1:8000/api/provinces"
+      );
+      if (!provincesResponse.ok) {
+        throw new Error("Failed to fetch provinces data");
+      }
+      const provinces = await provincesResponse.json();
 
       return { food, provinces };
     } catch (error) {
@@ -29,6 +50,8 @@ type Province = {
 };
 
 function RouteComponent() {
+  const navigate = useNavigate();
+
   const [selectedProvinces, setSelectedProvinces] = useState<Province[]>([]);
 
   const { food, provinces } = useLoaderData({ from: "/random" }) as {
@@ -53,13 +76,27 @@ function RouteComponent() {
     return null;
   };
 
+  useEffect(() => {
+    const data = window.localStorage.getItem("myTest");
+    if (data) setSelectedProvinces(JSON.parse(data));
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("myTest", JSON.stringify(selectedProvinces));
+  }, [selectedProvinces]);
+
   return (
     <div className="h-dvh overscroll-none">
       <div>
         <nav className="grid grid-cols-2 gap-4">
-          <div>
-            <h2 className="text-4xl">PHFoodGuesser</h2>
-          </div>
+          <h2
+            className="text-4xl cursor-pointer"
+            onClick={() => {
+              navigate({ to: "/" });
+            }}
+          >
+            PHFoodGuesser
+          </h2>
           <div className="flex justify-end gap-24">
             <div>
               <svg
@@ -129,6 +166,16 @@ function RouteComponent() {
             <span>0</span>
           </div>
           <hr className="h-px my-1 bg-gray-200 border-0 dark:bg-gray-700"></hr>
+          <ul className="space-y-2 mt-2 mb-3">
+            {selectedProvinces.map((province) => (
+              <li
+                key={province.id}
+                className="p-3 bg-gray-100 rounded-md shadow-sm"
+              >
+                {province.name}
+              </li>
+            ))}
+          </ul>
           <Select<Province>
             options={filteredProvinces}
             menuPlacement="top"
